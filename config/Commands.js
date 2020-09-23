@@ -1,4 +1,4 @@
-export const ControlCommands = {
+const controlCommands = {
     INITIALIZE_DRONE: 'command',
     TAKEOFF: 'takeOff',
     LAND: 'land',
@@ -18,13 +18,13 @@ export const ControlCommands = {
     CURVE: 'curve'
 };
 
-export const SetCommands = {
+const setCommands = {
     SPEED: 'speed',
     RC: 'rc',
     WIFI: 'wifi'
 };
 
-export const ReadCommands = {
+const readCommands = {
     SPEED: 'speed?',
     BATTERY: 'battery?',
     TIME: 'time?',
@@ -36,3 +36,9 @@ export const ReadCommands = {
     DISTANCE_FROM_TAKEOFF: 'tof?',
     WIFI: 'wifi?'
 };
+
+module.exports = {
+    controlCommands,
+    setCommands,
+    readCommands
+}
