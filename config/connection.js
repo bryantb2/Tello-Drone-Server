@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const {
     controlCommands
-} = require('./Commands');
+} = require('./commands');
 
 const connections = {
     connectionIP: '192.168.10.1',

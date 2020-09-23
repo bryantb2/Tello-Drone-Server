@@ -3,23 +3,18 @@ const WebSocket = require('ws');
 const throttle = require('lodash/throttle');
 const http = require('http');
 const url = require('url');
-const app = express();
-
-// drone web sockets
-const {
-    controlCommands,
-    setCommands,
-    readCommands
-} = require('./config/Commands');
 const {
     streamSocket,
     commandSocket,
     stateSocket
-} = require('./config/Connection');
-
-// routes and routing middleware
+} = require('./config/connection');
 const defaultRoute = require('./routes/Index');
-app.use('/test', defaultRoute);
+const app = express();
+
+// middlewares
+app.use(express.json());
+// routes
+app.use('/', defaultRoute);
 
 // websocket compatible http server
 const server = http.createServer(app);
@@ -76,6 +71,8 @@ commandWSS.on('connection', socket => {
 
 server.on('upgrade', (request, socket, head) => {
     console.log('upgrade fired');
+    // check the user's requested path
+    // direct them towards the correct websocket server
     const pathname = url.parse(request.url).pathname;
     if (pathname === '/state') {
         stateWSS.handleUpgrade(request, socket, head, ws => {
