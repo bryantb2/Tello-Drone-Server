@@ -2,19 +2,31 @@
   "name": "tello_server",
   "version": "1.0.0",
   "description": "Web service for interfacing with the drone hardware",
-  "main": "app.js",
+  "main": "app.ts",
   "scripts": {
-    "start": "nodemon main",
+    "start": "ts-node app.ts",
+    "dev": "nodemon app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Blake Bryant",
   "license": "MIT",
   "dependencies": {
+    "@types/node": "^15.0.1",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
+    "node": "^16.0.0",
     "node-fetch": "^2.6.1",
-    "nodemon": "^2.0.4",
-    "ws": "^7.3.1"
+    "nodemon": "^2.0.7",
+    "socket.io-client": "^4.0.1",
+    "ws": "^7.4.5"
+  },
+  "devDependencies": {
+    "@types/nodemon": "^1.19.0",
+    "@types/ws": "^7.4.2",
+    "ts-loader": "^9.1.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
   }
 }
