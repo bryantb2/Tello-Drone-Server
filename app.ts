@@ -1,30 +1,17 @@
 import express from 'express';
-import ws from 'ws';
-const throttle = require('lodash/throttle');
-const http = require('http');
-const url = require('url');
-const {
-    streamSocket,
-    commandSocket,
-    stateSocket
-} = require('./config/connection');
-const defaultRoute = require('./controllers');
+import { commandRouter } from './routes'
+import { SocketService } from "./services";
+import cors from 'cors'
 const app = express();
 
 // middlewares
+app.use(cors())
 app.use(express.json());
-// controllers
-app.use('/', defaultRoute);
+app.use('/command', commandRouter);
 
-// websocket compatible http server
-const server = http.createServer(app);
-
-// drone state socket server
-const stateWSS = new WebSocket.Server({ noServer: true });
-// video socket server
-const videoWSS = new WebSocket.Server({ noServer: true });
-// command socket server
-const commandWSS = new WebSocket.Server({ noServer: true });
+const socketService = new SocketService();
 
 // launch server
-server.listen(3001);
+app.listen(3001);
+
+console.log('initialization of server finished')

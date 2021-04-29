@@ -1,9 +1,9 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
     controlCommands,
     setCommands,
     readCommands
-} = require('../config/commands');
+} from'../config';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -19,4 +19,4 @@ router.get('/commandList', async (req, res) => {
     });
 });
 
-module.exports = router;
+export const commandRouter = router
