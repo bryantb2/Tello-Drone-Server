@@ -1,16 +1,11 @@
-const WebSocket = require('ws');
-const {
-    controlCommands
-} = require('./commands');
-
-const connections = {
+export const connections = {
     connectionIP: '192.168.10.1',
     portType: 'UDP',
     videoPort: '11111',
     commandPort: '8889',
     statePort: '8889'
 };
-
+/*
 // setup socket connections
 const streamSocket = new WebSocket(`ws://${connections.connectionIP}:${connections.videoPort}`, 'udp4');
 const commandSocket = new WebSocket(`ws://${connections.connectionIP}:${connections.commandPort}`, 'udp4');
@@ -25,7 +20,7 @@ streamSocket.onerror = (err) => {
     console.log('Error opening stream socket');
     console.log(err.error);
 };
-commandSocket.onerror = (err) => {
+commandSocket.onerror = (err: Error) => {
     console.log('Error opening command socket');
     console.log(err.error);
 }
@@ -38,4 +33,4 @@ module.exports ={
     streamSocket,
     commandSocket,
     stateSocket
-};
+};*/
