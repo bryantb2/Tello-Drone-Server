@@ -1,2 +1,2 @@
-export * from './commands/commandIds'
+export * from './commands'
 export * from './connection'

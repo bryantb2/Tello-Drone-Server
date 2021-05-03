@@ -2,7 +2,7 @@ import {BaseCommand} from "../BaseCommand";
 import {MissionDirectionPayload, RCControllerPayload, WifiPayload} from "./payloads";
 
 export enum sysCommands {
-    INITIALIZE_DRONE = 'Command',
+    INITIALIZE_DRONE = 'command',
     STREAM_ON = 'streamon',
     STREAM_OFF = 'streamoff',
     EMERGENCY = 'emergency',

@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import dgram from 'dgram'
 import {IDroneClient, IDroneState} from "./types";
-import {connections} from "../config";
+import {connections, createReadBarometer, createReadBattery} from "../config";
 import {
     ControlCommand,
     controlCommands,
@@ -11,6 +11,7 @@ import {
     sysCommands,
     SystemCommand
 } from "../config/commands";
+import {AddressInfo} from "net";
 
 export class DroneService extends EventEmitter implements IDroneClient {
     // fields
@@ -31,81 +32,40 @@ export class DroneService extends EventEmitter implements IDroneClient {
     private _stateSocket: dgram.Socket | null = null;
     private _videoSocket: dgram.Socket | null = null;
     private _commandSocket: dgram.Socket | null = null;
+    private _responseSocket: dgram.Socket | null = null;
 
     constructor() {
         super();
 
-        const { videoPort, commandPort, statePort } = connections
+        const { videoPort, commandPort, statePort, responsePort } = connections
 
         // UDP connection
-        const [droneState, droneVideo, droneCommands] = [
+        const [droneState, droneVideo, droneCommands, droneResponse] = [
             dgram.createSocket('udp4'),
             dgram.createSocket('udp4'),
             dgram.createSocket('udp4'),
+            dgram.createSocket('udp4')
         ]
-        droneState.bind(statePort, connections.connectionIP)
-        droneVideo.bind(videoPort, connections.connectionIP)
-        droneCommands.bind(commandPort, connections.connectionIP)
 
-        // listening callbacks
-        droneState.on('listening', function() {
-            const address = droneState.address();
-            console.log('UDP Server listening on ' + address.address + ':' + address.port);
-        });
-        droneVideo.on('listening', function() {
-            const address = droneVideo.address();
-            console.log('UDP Server listening on ' + address.address + ':' + address.port);
-        });
-        droneCommands.on('listening', function() {
-            const address = droneCommands.address();
-            console.log('UDP Server listening on ' + address.address + ':' + address.port);
-        });
+        droneState.bind(statePort)
+        droneVideo.bind(videoPort)
+        droneCommands.bind(commandPort)
+        droneResponse.bind(responsePort)
 
-        // message callbacks
-        droneState.on('message', (msg, remote) => {
-            console.log('Drone state connection msg: ', msg);
-        })
-        // drone commands
-        droneVideo.on('message', (msg, remote) => {
-            console.log('Drone video connection msg: ', msg);
-        });
-        droneCommands.on('message', (msg, remote) => {
-            console.log('Drone commands connection msg: ', msg);
-        })
-
-        // error callbacks
-        droneState.on('error', (err) => {
-            console.log('Error in drone state connection: ', err);
-        })
-        // drone commands
-        droneVideo.on('error', (err) => {
-            console.log('Error in drone video connection: ', err);
-        });
-        droneCommands.on('error', (err) => {
-            console.log('Error in drone command connection: ', err);
-        })
-
-        // listening callbacks
-        droneState.on('close', function() {
-            const address = droneState.address();
-            console.log('UDP Server closed on ' + address.address + ':' + address.port);
-        });
-        droneVideo.on('close', function() {
-            const address = droneVideo.address();
-            console.log('UDP Server closed on ' + address.address + ':' + address.port);
-        });
-        droneCommands.on('close', function() {
-            const address = droneCommands.address();
-            console.log('UDP Server closed on ' + address.address + ':' + address.port);
-        });
+        this.setupBasicListeners([droneState, droneVideo, droneCommands, droneResponse])
 
         this._stateSocket = droneState
         this._videoSocket = droneVideo
         this._commandSocket = droneCommands
+        this._responseSocket = droneResponse
 
-        // initialize drone
-        const initializeCmd = createInitialDroneCommand()
-        this.executeSystemCommand(initializeCmd)
+        setTimeout(() => {
+            this.executeSystemCommand(createInitialDroneCommand())
+            setTimeout(() => {
+                this.executeReadCommand(createReadBarometer())
+                this.executeReadCommand(createReadBattery())
+            }, 10000)
+        }, 9000)
     }
 
     closeClient = () => {
@@ -140,16 +100,20 @@ export class DroneService extends EventEmitter implements IDroneClient {
      */
     executeSystemCommand = (cmd: SystemCommand): void => {
         const isValid = Object.values(sysCommands).includes(cmd.type)
-        if (isValid)
+        if (isValid) {
             switch (cmd.type) {
                 case sysCommands.WIFI:
-                    this._commandSocket.send(cmd.type, this.payloadToString(cmd.payload))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, this.payloadToString(cmd.payload)))
                     break;
                 case sysCommands.CHANGE_ACCESS_POINT:
-                    this._commandSocket.send(cmd.type, this.payloadToString(cmd.payload))
+                    this.sendToSocket(
+                        this._commandSocket,
+                        this.formatCmd(cmd.type, this.payloadToString(cmd.payload))
+                    )
                     break;
                 case sysCommands.RC_CONTROLLER:
-                    this._commandSocket.send(
+                    this.sendToSocket(
+                        this._commandSocket,
                         this.formatCmd(
                             cmd.type,
                             this.payloadToString(cmd.payload)
@@ -157,19 +121,22 @@ export class DroneService extends EventEmitter implements IDroneClient {
                     )
                     break;
                 case sysCommands.MISSION_DIRECTION:
-                    this._commandSocket.send(
+                    this.sendToSocket(
+                        this._commandSocket,
                         this.formatCmd(
                             cmd.type,
                             (Object.entries(cmd.payload)
-                                .find(([index, isSelected]) => isSelected === true)
+                                    .find(([index, isSelected]) => isSelected === true)
                             )[0] || '0'
                         )
                     )
                     break;
                 default:
-                    this._commandSocket.send(cmd.type)
+                    this.sendToSocket(this._commandSocket, cmd.type)
                     break;
             }
+            console.log(`${cmd.type} System Command fired, with payload of: `, cmd.payload)
+        }
         else
             throw new Error('Invalid system command')
     }
@@ -181,39 +148,40 @@ export class DroneService extends EventEmitter implements IDroneClient {
                 case controlCommands.CURVE:
                     break;
                 case controlCommands.GO:
-                    this._commandSocket.send(this.formatCmd(cmd.type, this.payloadToString(cmd.payload)))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, this.payloadToString(cmd.payload)))
                     break;
                 case controlCommands.FLIP:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.direction))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.direction))
                     break;
                 case controlCommands.COUNTER_CLOCKWISE:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.rotationInDegrees.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.rotationInDegrees.toString()))
                     break;
                 case controlCommands.CLOCKWISE:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.rotationInDegrees.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.rotationInDegrees.toString()))
                     break;
                 case controlCommands.BACK:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
                     break;
                 case controlCommands.FORWARD:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
                     break;
                 case controlCommands.RIGHT:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
                     break;
                 case controlCommands.LEFT:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
                     break;
                 case controlCommands.DOWN:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
                     break;
                 case controlCommands.UP:
-                    this._commandSocket.send(this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
+                    this.sendToSocket(this._commandSocket, this.formatCmd(cmd.type, cmd.payload.movementInCM.toString()))
                     break;
                 default:
-                    this._commandSocket.send(cmd.type)
+                    this.sendToSocket(this._commandSocket, cmd.type)
                     break;
             }
+            console.log(`${cmd.type} Control Command fired, with payload of: `, cmd.payload)
         }
         else
             throw new Error('Invalid control command')
@@ -221,17 +189,71 @@ export class DroneService extends EventEmitter implements IDroneClient {
 
     executeReadCommand(cmd: ReadCommand): void {
         const isValid = Object.values(readCommands).includes(cmd.type)
-        if (isValid)
-            this._stateSocket.send(cmd.type)
+        if (isValid) {
+            console.log(`${cmd.type} Read Command fired, with payload of: `, cmd.payload)
+            this.sendToSocket(this._stateSocket, cmd.type)
+        }
         else
             throw new Error('Invalid read command')
     }
 
-    private formatCmd = (type: string, args: string = '') => `${type} ${args}`
+    // senders
+    private sendToSocket = (socket: dgram.Socket, cmd: string) => {
+        console.log('Send to Socket Fired', socket.address())
+        socket.send(
+            cmd,
+            0,
+            cmd.length,
+            socket.address().port,
+            connections.connectionIP,
+            err => {
+            if (err) console.log('error sending command: ', err)
+        })
+    }
 
+    // formatters
+    private formatCmd = (type: string, args: string = '') => `${type} ${args}`
     private payloadToString = (payload: Object) =>
         Object.values(payload).reduce(
             (argString: string, cmdArg: string) => cmdArg + ' ', ' '
         )
+    private formatAddress = (address: AddressInfo): string => address.address + ':' + address.port
+
+    // callback setup
+    private setupBasicListeners = (sockets: dgram.Socket[]): void => {
+        for (const socket of sockets) {
+            // initial listener
+            socket.on('listening', () => {
+                // instantiate remaining handlers
+                const address = socket.address()
+                this.logConnectionListen(address)
+
+                socket.on('message', (msg, remote) => {
+                    const response = msg.toString()
+                    this.logConnectionMessage(
+                        this.formatAddress(address),
+                        response
+                    )
+                })
+                socket.on('error', (err) => {
+                    console.log(`Error in ${this.formatAddress(address)} connection: `, err);
+                });
+                socket.on('close', () => {
+                    this.logConnectionClosed(address)
+                });
+            });
+        }
+    }
+
+    // loggers
+    private logConnectionMessage = (channel: string, msg: string) => {
+        console.log(`Drone ${channel} connection msg: `, msg);
+    }
+    private logConnectionListen = (address: AddressInfo) => {
+        console.log('UDP Server listening on ' + this.formatAddress(address));
+    }
+    private logConnectionClosed = (address: AddressInfo) => {
+        console.log('UDP Server closed on ' + this.formatAddress(address));
+    }
 }
 
