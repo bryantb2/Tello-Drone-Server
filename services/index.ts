@@ -1,2 +1,2 @@
-export * from './droneClientService'
+export * from './droneClient'
 export * from './types'

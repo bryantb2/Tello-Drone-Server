@@ -1,1 +1,1 @@
-export * from './DroneClient'
+export * from './droneClient'

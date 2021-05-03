@@ -50,3 +50,4 @@ export interface CurvePayload {
     flyToZ: number;
     speed: number;
 }
+
