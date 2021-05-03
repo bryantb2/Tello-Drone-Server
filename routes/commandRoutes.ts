@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-    controlCommands,
+    movementCommands,
     setCommands,
     readCommands
 } from'../config';
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 router.get('/commandList', async (req, res) => {
     // send the command list to the user
     return res.json({
-        controlCommands,
+        controlCommands: movementCommands,
         setCommands,
         readCommands
     });

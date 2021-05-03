@@ -2,7 +2,10 @@ import express from 'express';
 import { commandRouter } from './routes'
 import { SocketService } from "./services";
 import cors from 'cors'
+require('dotenv').config('./bruh.json')
 const app = express();
+
+console.log('Variable is: ', process.env.TEST)
 
 // middlewares
 app.use(cors())

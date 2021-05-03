@@ -1,9 +1,8 @@
-import WebSocket from 'ws';
-import { connections } from "../config";
+import {connections, movementCommands, readCommands, sysCommands} from "../config";
 import EventEmitter from "events";
 import dgram from 'dgram'
 import {Command, DroneClient, DroneState} from "./types";
-import {io} from 'socket.io-client'
+import {DEFAULT_ENCODING} from "crypto";
 
 export class SocketService extends EventEmitter implements DroneClient {
     // fields
@@ -28,28 +27,6 @@ export class SocketService extends EventEmitter implements DroneClient {
         super();
 
         const { videoPort, commandPort, statePort } = connections
-        /*this._videoSocket = new WebSocket(`ws://${connections.connectionIP}`, {
-            port: videoPort
-        })
-        this._stateSocket = new WebSocket(`ws://${connections.connectionIP}`, {
-            port: statePort
-        })
-        this._commandSocket = new WebSocket(`ws://${connections.connectionIP}`, {
-            port: commandPort
-        })
-        this._stateSocket.on('error', (socket, err) => {
-            console.log('Error occurred attempting to connect to drone state: ', err)
-        })
-        this._stateSocket.on('open', (socket) => {
-            console.log('Drone state opened')
-            socket.send('soemthing!')
-        })
-        this._stateSocket.on('upgrade', (socket, request) => {
-            console.log('Drone state upgrade fired, request is: ', request)
-        })
-        this._stateSocket.on('message', (socket, data) => {
-            console.log('Server has received msg from drone, ', data)
-        })*/
 
         // UDP connection
         const [droneState, droneVideo, droneCommands] = [
@@ -117,8 +94,19 @@ export class SocketService extends EventEmitter implements DroneClient {
         this._videoSocket = droneVideo
         this._commandSocket = droneCommands
 
-        this.
+        // initialize drone
+        this.executeSystemCommand({
+            type: movementCommands.INITIALIZE_DRONE
+        })
     }
+
+    executeRotationMovement = (cmd: Command): void => {
+
+    };
+
+    executeHorizontalMovement = (cmd: Command): void => {
+
+    };
 
     closeClient = () => {
         this._videoSocket.close()
@@ -137,20 +125,30 @@ export class SocketService extends EventEmitter implements DroneClient {
         return this._droneState;
     }
 
-    execute
-
-    executeFlipMovement(cmds: Command): void {
-
+    /**
+     * Executes a command from the System Commands enumerable. Returns error if the command type is not o System Command
+     */
+    executeSystemCommand = (cmd: Command): void => {
+        const isValid = Object.values(sysCommands).includes(cmd.type as sysCommands)
+        if (isValid)
+            this._commandSocket.send(cmd.type)
+        else
+            throw new Error('Invalid system command')
     }
 
-    executeLateralMovement(cmd: Command): void {
+    executeFlipMovement = (cmds: Command): void => {
+        throw new Error('Execute flip not implemented ')
     }
 
-    executeSetSpeed(cmd: Command): void {
-
+    executeLateralMovement = (cmd: Command): void => {
+        throw new Error('Execute lateral movement not implemented ')
     }
 
-    executeVerticalMovement(cmds: Command[]): void {
+    executeSetSpeed = (cmd: Command): void => {
+        throw new Error('Execute set speed not implemented ')
+    }
+
+    executeVerticalMovement = (cmds: Command[]): void => {
 
     }
 }

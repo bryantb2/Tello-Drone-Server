@@ -1,11 +1,6 @@
-import {controlCommands, readCommands, setCommands} from "../../config";
+import {movementCommands, readCommands, setCommands, sysCommands} from "../../config";
 import WebSocket from "ws";
 import dgram from "dgram";
-
-export interface Command {
-    type: keyof controlCommands & keyof setCommands & keyof  readCommands,
-    payload?: any
-}
 
 export interface DroneState {
     batteryPercent: number
