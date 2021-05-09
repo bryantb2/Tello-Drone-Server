@@ -6,10 +6,25 @@ import {
 } from "../../config/commands";
 
 export interface IDroneState {
+    airCharacteristics: {
+        pitch: number;
+        roll: number;
+        yaw: number;
+    },
     isInFlight: boolean
     batteryPercent: number
     currentFlightTime: number
     speed: number
+    currentAccel: {
+        yAccel: number,
+        xAccel: number,
+        zAccel: number
+    },
+    currentVelocity: {
+        yVel: number,
+        xVel: number,
+        zVel: number
+    }
     currentPosition: {
         xOffSet: number,
         yOffSet: number,

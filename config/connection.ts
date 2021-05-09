@@ -4,5 +4,4 @@ export const connections = {
     videoPort: 11111,
     commandPort: 8889,
     statePort: 8890,
-    responsePort: 8001
 };
