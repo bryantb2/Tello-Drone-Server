@@ -1,5 +1,5 @@
-import {BaseCommand} from "../BaseCommand";
-import {MissionDirectionPayload, RCControllerPayload, WifiPayload} from "./payloads";
+import { BaseCommand } from "../BaseCommand";
+import { MissionDirectionPayload, RCControllerPayload, WifiPayload } from "./payloads";
 
 export enum sysCommands {
     INITIALIZE_DRONE = 'command',

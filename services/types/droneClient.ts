@@ -1,9 +1,9 @@
-import dgram from "dgram";
+import dgram from 'dgram';
 import {
-    ControlCommand,
-    ReadCommand,
-    SystemCommand
-} from "../../config/commands";
+  ControlCommand,
+  ReadCommand,
+  SystemCommand,
+} from '../../config/commands';
 
 export interface IDroneState {
     airCharacteristics: {
@@ -11,28 +11,33 @@ export interface IDroneState {
         roll: number;
         yaw: number;
     },
-    isInFlight: boolean
-    batteryPercent: number
-    currentFlightTime: number
-    speed: number
     currentAccel: {
-        yAccel: number,
-        xAccel: number,
-        zAccel: number
+        y: number,
+        x: number,
+        z: number
     },
     currentVelocity: {
-        yVel: number,
-        xVel: number,
-        zVel: number
+        y: number,
+        x: number,
+        z: number
     }
     currentPosition: {
-        xOffSet: number,
-        yOffSet: number,
-        zOffSet: number
+        y: number,
+        x: number,
+        z: number
     },
-    acceleration: number,
-    altitude: number;
-    batteryTemp: number,
+    systems: {
+        battery: {
+            batteryPercent: number,
+            averageBatTemp: number,
+            lowestBatTemp: number,
+            highestBatTemp: number,
+        }
+        barometer: number
+        isInFlight: boolean
+        currentFlightTime: number
+        totalOnTime: number;
+    }
 }
 
 export interface IDroneClient {
@@ -45,4 +50,3 @@ export interface IDroneClient {
     controlSocket: dgram.Socket | null
     readSocket: dgram.Socket | null
 }
-
