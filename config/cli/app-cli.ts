@@ -7,9 +7,19 @@ import {
   ReadOptions,
   SystemOptions,
   ControlOptions,
+  readCommands,
+  sysCommands,
+  controlCommands,
 } from "../commands";
+import { DroneService } from "../../services";
+import { ICustomOption } from "./types";
+
+// const drone = new DroneService();
 
 const program = new Command();
+program.exitOverride(/* (err) => {
+  // console.log("Error thrown by commander: ", err);
+} */);
 
 const setOptionsToCommand = (
   command: commander.Command,
@@ -23,11 +33,17 @@ const setOptionsToCommand = (
   command.action(actionCallback);
 };
 
+/*
+const findActionByArg = (
+
+): readCommands | sysCommands | controlCommands */
+
 // build out system command options and handler
 const systemCommandCLI = program
   .command("system")
   .description("Execute a system command to configure the drone");
 setOptionsToCommand(systemCommandCLI, systemOptions, (args) => {
+  // drone.executeSystemCommand()
   console.log("System command called, args used are: ", args);
 });
 
@@ -50,8 +66,13 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-console.log(`For a list of valid commands, type "--help"`);
-const openCLI = (): void => {
+const openCLI = (firstRun: boolean = false): void => {
+  if (firstRun) {
+    console.log("---------------------");
+    console.log("Tello Drone CLI Tool");
+    console.log("---------------------\n");
+    console.log(program.helpInformation());
+  }
   // open cli to user
   rl.question("Enter a command: ", (input) => {
     try {
@@ -59,10 +80,11 @@ const openCLI = (): void => {
       console.log("input arr args: ", inputArr);
       program.parse(inputArr, { from: "user" });
       console.log(input);
+      openCLI();
     } catch (err) {
-      console.log("An error has occured: ", err);
+      openCLI();
     }
   });
 };
 
-openCLI();
+openCLI(true);
