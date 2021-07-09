@@ -6,7 +6,7 @@
   "scripts": {
     "dev:debug": "nodemon --exec node --inspect --require ts-node/register app.ts",
     "dev": "nodemon app.ts",
-    "cli": "node -r ts-node/register app-cli.ts",
+    "cli": "node -r ts-node/register config/cli/app-cli.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Blake Bryant",
