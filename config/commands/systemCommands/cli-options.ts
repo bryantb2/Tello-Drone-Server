@@ -1,6 +1,7 @@
 import { sysCommands } from "./types";
 import { ICustomOption } from "../../cli/types";
 
+export type SystemOptions = ICustomOption<sysCommands>[];
 export const systemOptions: ICustomOption<sysCommands>[] = [
   {
     abrv: "-init",

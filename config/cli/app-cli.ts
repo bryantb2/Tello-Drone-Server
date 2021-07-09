@@ -1,36 +1,49 @@
-import { Command } from "commander";
+import commander, { Command } from "commander";
 import readline from "readline";
+import {
+  readOptions,
+  systemOptions,
+  controlOptions,
+  ReadOptions,
+  SystemOptions,
+  ControlOptions,
+} from "../commands";
 
 const program = new Command();
+
+const setOptionsToCommand = (
+  command: commander.Command,
+  cliOptions: ReadOptions | SystemOptions | ControlOptions,
+  actionCallback: (args: any) => void
+): void => {
+  cliOptions.forEach((option) => {
+    const { abrv, normalized, desc } = option;
+    command.option(abrv, normalized, desc);
+  });
+  command.action(actionCallback);
+};
 
 // build out system command options and handler
 const systemCommandCLI = program
   .command("system")
-  .description("Execute a system command");
-systemOptions.forEach((option) => {
-  const { abrv, normalized, desc } = option;
-  systemCommandCLI.option(abrv, normalized, desc);
-});
-systemCommandCLI.action((args) => {
+  .description("Execute a system command to configure the drone");
+setOptionsToCommand(systemCommandCLI, systemOptions, (args) => {
   console.log("System command called, args used are: ", args);
 });
 
 const flightCommandCLI = program
   .command("control")
-  .description("Execute a drone flight command")
+  .description("Execute a control command to manipulate drone in flight");
+setOptionsToCommand(flightCommandCLI, controlOptions, (args) => {
+  console.log("Control command called, args used are: ", args);
+});
 
-  .option()
-  .option(
-    "-sc",
-    "--sys-command <string>",
-    "Execute a system command to the drone"
-  )
-  .option("-r", "--read <string>", "Read and return flight data from the drone")
-  .option(
-    "-a",
-    "--args <string[]>",
-    "Arguments for a system or control command"
-  );
+const readCommandCLI = program
+  .command("read")
+  .description("Execute a read command to get drone state");
+setOptionsToCommand(readCommandCLI, readOptions, (args) => {
+  console.log("Read command called, args used are: ", args);
+});
 
 const rl = readline.createInterface({
   input: process.stdin,

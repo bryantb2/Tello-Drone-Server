@@ -1,7 +1,8 @@
 import { controlCommands } from ".";
 import { ICustomOption } from "../../cli/types";
 
-export const controlOptions: ICustomOption<controlCommands>[] = [
+export type ControlOptions = ICustomOption<controlCommands>[];
+export const controlOptions: ControlOptions = [
   {
     abrv: "-up",
     normalized: "--up <string>",

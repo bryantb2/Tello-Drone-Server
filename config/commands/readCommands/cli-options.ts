@@ -1,7 +1,8 @@
 import { readCommands } from ".";
 import { ICustomOption } from "../../cli/types";
 
-export const readOptions: ICustomOption<readCommands>[] = [
+export type ReadOptions = ICustomOption<readCommands>[];
+export const readOptions: ReadOptions = [
   {
     abrv: "-h",
     normalized: "--height?",
